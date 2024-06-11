@@ -4,46 +4,41 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUrlRequest;
 use GuzzleHttp\Client;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use App\Models\Url;
 use Illuminate\Support\Str;
+use App\Services\UrlShortenerService;
 
 class UrlController extends Controller
 {
+    protected $urlShortenerService;
+
+    public function __construct(UrlShortenerService $urlShortenerService)
+    {
+        $this->urlShortenerService = $urlShortenerService;
+    }
+
     public function index()
     {
         return view('index');
     }
 
-    public function shorten(StoreUrlRequest $request)
+    public function shorten(StoreUrlRequest $request): JsonResponse
     {
         $url = $request->input('url');
 
-        // Check if URL is safe using Google Safe Browsing API
+        // Проверка на безопасность URL через Google Safe Browsing API
         if (!$this->isUrlSafe($url)) {
-            return response()->json(['error' => 'Unsafe URL']);
+            return response()->json(['error' => 'Unsafe URL'], 400);
         }
 
-        $existingUrl = Url::where('original_url', $url)->first();
+        // Сокращение URL с помощью сервиса
+        $shortUrl = $this->urlShortenerService->shortenUrl($url);
 
-        if ($existingUrl) {
-            return response()->json(['short_url' => $existingUrl->short_url]);
-        }
-
-        // Generate unique short URL
-        $hash = Str::random(6);
-        $shortUrl = url('/') . '/' . $hash;
-
-        // Save the new URL to the database
-        $newUrl = Url::create([
-            'original_url' => $url,
-            'short_url' => $shortUrl,
-        ]);
-
-        return response()->json(['short_url' => $newUrl->short_url]);
+        return response()->json(['short_url' => $shortUrl]);
     }
 
-    private function isUrlSafe($url)
+    private function isUrlSafe($url): bool
     {
         $client = new Client();
         $apiKey = 'AIzaSyCZwCz6thY61Vxhw7UAxxa_e75KKn07rZQ';
@@ -64,23 +59,29 @@ class UrlController extends Controller
             ],
         ];
 
-        $response = $client->post($apiUrl, [
-            'json' => $body,
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Cache-Control' => 'no-cache',
-            ],
-            'verify' => false, // disable SSL
-        ]);
+        try {
+            $response = $client->post($apiUrl, [
+                'json' => $body,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Cache-Control' => 'no-cache',
+                ],
+                'verify' => false, // disable SSL verification
+            ]);
 
-        $data = json_decode($response->getBody(), true);
+            $data = json_decode($response->getBody(), true);
 
-        return empty($data['matches']);
+            return empty($data['matches']);
+        } catch (\Exception $e) {
+            //TODO Log the error or return the default value
+            return false;
+        }
+
     }
 
     public function redirect($hash)
     {
-        $url = Url::where('short_url', url('/') . '/' . $hash)->first();
+        $url = Url::where('short_url', $hash)->first();
 
         if ($url) {
             return redirect($url->original_url);
