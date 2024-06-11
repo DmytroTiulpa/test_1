@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUrlRequest;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use App\Models\Url;
@@ -14,12 +15,8 @@ class UrlController extends Controller
         return view('index');
     }
 
-    public function shorten(Request $request)
+    public function shorten(StoreUrlRequest $request)
     {
-        $request->validate([
-            'url' => 'required|url',
-        ]);
-
         $url = $request->input('url');
 
         // Check if URL is safe using Google Safe Browsing API
@@ -27,7 +24,6 @@ class UrlController extends Controller
             return response()->json(['error' => 'Unsafe URL']);
         }
 
-        // Check if the URL already exists in the database
         $existingUrl = Url::where('original_url', $url)->first();
 
         if ($existingUrl) {
