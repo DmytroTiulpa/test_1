@@ -1,3 +1,23 @@
+# <span style="color:red;">Task for PHP developer</span>
+
+## <span style="color:green;">Task:</span> 
+Create a webpage prototype for URLs shortener.
+
+## <span style="color:green;">Requirements:</span>
+- Create a form, that allows adding URL and system generates short unique URL:
+    - The format of generated URL: example.com/[hash];
+    - The short URL must be a valid URL;
+    - The URL must be shortened till 6 symbols hash, which contains alphanumeric symbols;
+    - Algorithm must recognize duplicate URL and instead of generating new short URL, show previously created;
+    - Upon submit, the URL should be checked using the [Google Safe Browsing API](https://developers.google.com/safe-browsing/v4/lookup-api). Or any other API with the same function.
+- After implementation, upon opening the short URL, the user must be redirected to the original URL.
+- Advantage, if functionality could work from folder (e.g.: example.com/something/[hash]).
+- For implementation use Laravel and Vue.js.
+
+As a result, provide MySQL dump and source code of the task. 
+<hr>
+
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
